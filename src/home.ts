@@ -1,0 +1,506 @@
+export default `<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+        transform: scale(0.8);
+      }
+
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: 0.4s;
+        transition: 0.4s;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        -webkit-transition: 0.4s;
+        transition: 0.4s;
+      }
+
+      input:checked + .slider {
+        background-color: #2196f3;
+      }
+
+      input:focus + .slider {
+        box-shadow: 0 0 1px #2196f3;
+      }
+
+      input:checked + .slider:before {
+        -webkit-transform: translateX(26px);
+        -ms-transform: translateX(26px);
+        transform: translateX(26px);
+      }
+
+      /* Rounded sliders */
+      .slider.round {
+        border-radius: 34px;
+      }
+
+      .slider.round:before {
+        border-radius: 50%;
+      }
+      body {
+        padding: 20px;
+      }
+      .center {
+        text-align: center;
+      }
+      .loader {
+        font-size: 10px;
+        margin: 50px auto;
+        text-indent: -9999em;
+        width: 11em;
+        height: 11em;
+        border-radius: 50%;
+        background: #ffffff;
+        background: -moz-linear-gradient(
+          left,
+          #ffffff 10%,
+          rgba(255, 255, 255, 0) 42%
+        );
+        background: -webkit-linear-gradient(
+          left,
+          #ffffff 10%,
+          rgba(255, 255, 255, 0) 42%
+        );
+        background: -o-linear-gradient(
+          left,
+          #ffffff 10%,
+          rgba(255, 255, 255, 0) 42%
+        );
+        background: -ms-linear-gradient(
+          left,
+          #ffffff 10%,
+          rgba(255, 255, 255, 0) 42%
+        );
+        background: linear-gradient(
+          to right,
+          #ffffff 10%,
+          rgba(255, 255, 255, 0) 42%
+        );
+        position: relative;
+        -webkit-animation: load3 1.4s infinite linear;
+        animation: load3 1.4s infinite linear;
+        -webkit-transform: translateZ(0);
+        -ms-transform: translateZ(0);
+        transform: translateZ(0);
+      }
+      .loader:before {
+        width: 50%;
+        height: 50%;
+        background: #ffffff;
+        border-radius: 100% 0 0 0;
+        position: absolute;
+        top: 0;
+        left: 0;
+        content: "";
+      }
+      .loader:after {
+        background: #0dc5c1;
+        width: 75%;
+        height: 75%;
+        border-radius: 50%;
+        content: "";
+        margin: auto;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+      }
+      @-webkit-keyframes load3 {
+        0% {
+          -webkit-transform: rotate(0deg);
+          transform: rotate(0deg);
+        }
+        100% {
+          -webkit-transform: rotate(360deg);
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes load3 {
+        0% {
+          -webkit-transform: rotate(0deg);
+          transform: rotate(0deg);
+        }
+        100% {
+          -webkit-transform: rotate(360deg);
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+    <title>Set Up Athan</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    />
+    <link
+      rel="stylesheet"
+      href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css"
+    />
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <script
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+      crossorigin
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+      crossorigin
+    ></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script>
+      function postApi(url, body) {
+        return fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }).then((response) => response.json());
+      }
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const allPrayers = ["fajr", "dhuhr", "asr", "maghrib", "isha"];
+
+      const useState = React.useState;
+      const useEffect = React.useEffect;
+
+      function useApi(url) {
+        const [data, setData] = useState(null);
+        const [error, setError] = useState(null);
+        const [loading, setLoading] = useState(false);
+
+        const refetch = React.useCallback(() => {
+          setLoading(true);
+          fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+              setData(data);
+              setLoading(false);
+            })
+            .catch((error) => {
+              setError(error);
+              setLoading(false);
+            });
+        }, [url]);
+
+        useEffect(() => {
+          refetch();
+        }, [refetch]);
+
+        return { data, error, loading, refetch };
+      }
+
+      function App() {
+        return (
+          <div>
+            <h2 className="center">Manage Athan Settings</h2>
+
+            <CityInput />
+            <AllDevices />
+          </div>
+        );
+      }
+
+      function PrayerTimes() {
+        const { data, loading, error, refetch } = useApi("/api/prayertimes");
+
+        if (loading) {
+          return <div className="loader"></div>;
+        }
+
+        if (error) {
+          return <div>Error: {error.message}</div>;
+        }
+
+        if (!data) {
+          return <div>No data</div>;
+        }
+
+        return (
+          <div>
+            <p className="center">Prayer Times:</p>
+
+            {Object.keys(data).map((p) => (
+              <p>
+                {p}: {new Date(data[p]).toLocaleTimeString()}
+              </p>
+            ))}
+          </div>
+        );
+      }
+
+      function CityInput() {
+        const { data, error, loading, refetch } = useApi("/api/settings/list");
+
+        const [city, setCity] = useState("");
+        useEffect(() => {
+          if (data && data.city) {
+            setCity(data.city);
+          }
+        }, [data]);
+
+        function save() {
+          postApi("/api/settings/update/city", {
+            value: city,
+          }).then(() => {
+            refetch();
+          });
+        }
+
+        return (
+          <div className="center">
+            {data && data.city && <PrayerTimes />}
+            <br />
+            <div className="center">
+              City:{" "}
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+              />
+              <br />
+              <button
+                style={{
+                  backgroundColor: "#0dc5c1",
+                  color: "white",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  marginTop: "10px",
+                }}
+                onClick={save}
+              >
+                Save City
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      function ScanButton({ refetch }) {
+        const [scanning, setScanning] = useState(false);
+
+        function handleClick() {
+          setScanning(true);
+          fetch("/api/devices/scan")
+            .then((response) => response.json())
+            .then((data) => {
+              setScanning(false);
+              refetch();
+            });
+        }
+
+        if (scanning) {
+          return (
+            <div>
+              <p className="center">Scanning</p>
+              <div className="loader center">Scanning...</div>
+            </div>
+          );
+        }
+
+        return (
+          <button
+            onClick={handleClick}
+            style={{
+              fontSize: 18,
+              background: "purple",
+              color: "white",
+              padding: 10,
+              borderRadius: 20,
+              marginBottom: 20,
+            }}
+          >
+            Scan for New Devices
+          </button>
+        );
+      }
+
+      function AllDevices() {
+        const { data, error, loading, refetch } = useApi("/api/devices/list");
+
+        if (loading) {
+          return <div>Loading...</div>;
+        }
+
+        if (error) {
+          return <div>Error: {error.message}</div>;
+        }
+
+        if (!data) {
+          return <div>No devices found</div>;
+        }
+
+        return (
+          <div>
+            <h3 className="center">Devices</h3>
+            <div className="center">
+              <ScanButton refetch={refetch} />
+
+              {data && !data.length && (
+                <div className="center">No devices found</div>
+              )}
+            </div>
+
+            {data.map((device) => (
+              <Device {...device} key={device.id} refetch={refetch} />
+            ))}
+          </div>
+        );
+      }
+
+      function Device({
+        id,
+        name,
+        friendlyName,
+        volume,
+        enabled,
+        prayers,
+        refetch,
+      }) {
+        const [newPrayers, setNewPrayers] = useState(prayers);
+        const [newVolume, setNewVolume] = useState(volume);
+        const [newEnabled, setNewEnabled] = useState(enabled);
+
+        const changesMade =
+          newPrayers.toString() !== prayers.toString() ||
+          volume !== newVolume ||
+          newEnabled !== enabled;
+
+        function togglePrayer(prayer) {
+          const newerPrayers = [...newPrayers];
+          const index = newerPrayers.indexOf(prayer);
+          if (index === -1) {
+            newerPrayers.push(prayer);
+          } else {
+            newerPrayers.splice(index, 1);
+          }
+          setNewPrayers(newerPrayers);
+        }
+
+        function save() {
+          postApi("/api/devices/update/" + id, {
+            prayers: newPrayers,
+            volume: newVolume,
+            enabled: newEnabled,
+          }).then(() => {
+            refetch();
+          });
+        }
+
+        return (
+          <div>
+            <div
+              style={{
+                border: "1px solid grey",
+                borderRadius: 20,
+                padding: 20,
+                maxWidth: "calc(90vw - 20px)",
+              }}
+            >
+              <p>
+                {changesMade && (
+                  <p style={{ color: "red" }}>You have unsaved changes</p>
+                )}
+              </p>
+              <h5>Friendly Name: {friendlyName}</h5>
+              <p>Full Name: {name}</p>
+              <h6>Enabled: </h6>
+
+              <label class="switch">
+                <input
+                  type="checkbox"
+                  checked={newEnabled}
+                  onChange={() => setNewEnabled(!newEnabled)}
+                />
+                <span class="slider round"></span>
+              </label>
+              <br />
+
+              <h6>Volume: </h6>
+              <input
+                type="number"
+                min="0"
+                max="1"
+                pattern="[0-1]\.[0-9]+*"
+                style={{ width: 50 }}
+                step="0.1"
+                value={newVolume}
+                onChange={(e) => setNewVolume(e.target.value)}
+              />
+              <br />
+
+              <p>Prayers:</p>
+              <p>Select which prayers you want to be played on this device</p>
+
+              {allPrayers.map((p) => (
+                <div key={p}>
+                  <input
+                    type="checkbox"
+                    checked={newPrayers.includes(p)}
+                    onChange={() => togglePrayer(p)}
+                  />{" "}
+                  {p}
+                </div>
+              ))}
+
+              <br />
+
+              {changesMade && (
+                <button
+                  style={{
+                    backgroundColor: "#0dc5c1",
+                    color: "white",
+                    border: "none",
+                    padding: "10px 20px",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    marginTop: "10px",
+                  }}
+                  onClick={save}
+                >
+                  Save Changes
+                </button>
+              )}
+            </div>
+            <br />
+            <hr />
+          </div>
+        );
+      }
+
+      ReactDOM.render(<App />, document.getElementById("root"));
+    </script>
+  </body>
+</html>
+`;

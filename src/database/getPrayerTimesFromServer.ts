@@ -116,6 +116,7 @@ export default async function getPrayerTimesFromServer(
   );
 
   const times: PrayerTime = {
+    date: date.toDateString(),
     fajr: new Date(response.data.data.timings.Fajr),
     dhuhr: new Date(response.data.data.timings.Dhuhr),
     asr: new Date(response.data.data.timings.Asr),
@@ -125,18 +126,16 @@ export default async function getPrayerTimesFromServer(
 
   database
     .prepare(
-      "INSERT INTO prayer_times (date, fajr, dhuhr, asr, maghrib, isha) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO prayer_times (date, fajr, dhuhr, asr, maghrib, isha) VALUES (?, ?, ?, ?, ?, ?)"
     )
     .run(
-      new Date().toDateString(),
+      times.date,
       times.fajr.getTime(),
       times.dhuhr.getTime(),
       times.asr.getTime(),
       times.maghrib.getTime(),
       times.isha.getTime()
     );
-  return {
-    date: response.data.data.date.gregorian.date,
-    times,
-  };
+
+  return times;
 }

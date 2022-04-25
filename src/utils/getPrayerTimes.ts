@@ -6,14 +6,21 @@ export default async function getPrayerTimes(
   city: string
 ): Promise<PrayerTime> {
   const databaseTimes: PrayerTime[] = database
-    .prepare(`SELECT * FROM prayer_times WHERE city = ? AND date = ?`)
-    .all(city, date.toDateString());
+    .prepare(`SELECT * FROM prayer_times WHERE date = ?`)
+    .all(date.toDateString());
 
   if (databaseTimes.length > 0) {
-    return databaseTimes[0];
+    return {
+      date: databaseTimes[0].date,
+      fajr: new Date(databaseTimes[0].fajr),
+      dhuhr: new Date(databaseTimes[0].dhuhr),
+      asr: new Date(databaseTimes[0].asr),
+      maghrib: new Date(databaseTimes[0].maghrib),
+      isha: new Date(databaseTimes[0].isha),
+    };
   }
 
   const fromServer = await getPrayerTimesFromServer(date, city);
 
-  return fromServer.times;
+  return fromServer;
 }
