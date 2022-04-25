@@ -3,10 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var database_1 = __importDefault(require("./database"));
+var fs_1 = __importDefault(require("fs"));
 function getDevices() {
-    var rows = database_1.default.prepare("SELECT * FROM devices").all();
-    return rows.map(function (row) {
+    var devices = JSON.parse(fs_1.default.readFileSync("./devices.json", "utf8"));
+    return devices.map(function (row) {
         return {
             id: row.id,
             name: row.name,
@@ -14,7 +14,7 @@ function getDevices() {
             host: row.host,
             enabled: row.enabled,
             volume: row.volume,
-            prayers: JSON.parse(row.prayers),
+            prayers: row.prayers,
         };
     });
 }

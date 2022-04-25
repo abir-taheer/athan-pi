@@ -1,8 +1,9 @@
-import database from "./database";
+import fs from "fs";
 
 export default function getDevices(): DatabaseDevice[] {
-  const rows = database.prepare(`SELECT * FROM devices`).all();
-  return rows.map((row) => {
+  const devices = JSON.parse(fs.readFileSync("./devices.json", "utf8"));
+
+  return devices.map((row: any) => {
     return {
       id: row.id,
       name: row.name,
@@ -10,7 +11,7 @@ export default function getDevices(): DatabaseDevice[] {
       host: row.host,
       enabled: row.enabled,
       volume: row.volume,
-      prayers: JSON.parse(row.prayers),
+      prayers: row.prayers,
     };
   });
 }

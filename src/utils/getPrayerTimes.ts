@@ -1,22 +1,24 @@
-import database from "../database/database";
 import getPrayerTimesFromServer from "../database/getPrayerTimesFromServer";
+import fs from "fs";
 
 export default async function getPrayerTimes(
   date: Date,
   city: string
 ): Promise<PrayerTime> {
-  const databaseTimes: PrayerTime[] = database
-    .prepare(`SELECT * FROM prayer_times WHERE date = ?`)
-    .all(date.toDateString());
+  const allTimes = fs.readFileSync("./prayerTimes.json", "utf8");
+  const times = JSON.parse(allTimes);
+  const timesForDate = times.find(
+    (time: any) => time.date === date.toDateString()
+  );
 
-  if (databaseTimes.length > 0) {
+  if (timesForDate) {
     return {
-      date: databaseTimes[0].date,
-      fajr: new Date(databaseTimes[0].fajr),
-      dhuhr: new Date(databaseTimes[0].dhuhr),
-      asr: new Date(databaseTimes[0].asr),
-      maghrib: new Date(databaseTimes[0].maghrib),
-      isha: new Date(databaseTimes[0].isha),
+      date: timesForDate.date,
+      fajr: new Date(timesForDate.fajr),
+      dhuhr: new Date(timesForDate.dhuhr),
+      asr: new Date(timesForDate.asr),
+      maghrib: new Date(timesForDate.maghrib),
+      isha: new Date(timesForDate.isha),
     };
   }
 

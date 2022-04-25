@@ -1,5 +1,5 @@
 import axios from "axios";
-import database from "./database";
+import fs from "fs";
 
 type ApiResponse = {
   code: number;
@@ -124,18 +124,7 @@ export default async function getPrayerTimesFromServer(
     isha: new Date(response.data.data.timings.Isha),
   };
 
-  database
-    .prepare(
-      "INSERT INTO prayer_times (date, fajr, dhuhr, asr, maghrib, isha) VALUES (?, ?, ?, ?, ?, ?)"
-    )
-    .run(
-      times.date,
-      times.fajr.getTime(),
-      times.dhuhr.getTime(),
-      times.asr.getTime(),
-      times.maghrib.getTime(),
-      times.isha.getTime()
-    );
+  fs.writeFileSync("./prayerTimes.json", JSON.stringify([times]));
 
   return times;
 }

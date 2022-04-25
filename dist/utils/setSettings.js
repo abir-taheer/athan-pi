@@ -4,16 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs_1 = __importDefault(require("fs"));
-function initTables() {
+function setSettings(name, value) {
     if (!fs_1.default.existsSync("./settings.json")) {
         fs_1.default.writeFileSync("./settings.json", "{ }");
     }
-    if (!fs_1.default.existsSync("./devices.json")) {
-        fs_1.default.writeFileSync("./devices.json", "[]");
-    }
-    if (!fs_1.default.existsSync("./prayerTimes.json")) {
-        fs_1.default.writeFileSync("./prayerTimes.json", "[]");
-    }
+    var settings = JSON.parse(fs_1.default.readFileSync("./settings.json", "utf8"));
+    settings[name] = value;
+    fs_1.default.writeFileSync("./settings.json", JSON.stringify(settings));
 }
-exports.default = initTables;
-//# sourceMappingURL=initTables.js.map
+exports.default = setSettings;
+//# sourceMappingURL=setSettings.js.map

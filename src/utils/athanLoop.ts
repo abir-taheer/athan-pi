@@ -1,16 +1,14 @@
 import ChromecastAPI from "chromecast-api";
-import database from "../database/database";
 import getDevices from "../database/getDevices";
 import getPrayerTimes from "./getPrayerTimes";
+import getSettings from "./getSettings";
 
 const prayers: Prayer[] = ["fajr", "dhuhr", "asr", "maghrib", "isha"];
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default async function athanLoop() {
-  const citySetting = await database
-    .prepare(`SELECT value FROM settings WHERE name = ?`)
-    .get("city");
+  const citySetting = getSettings().city;
 
   if (!citySetting) {
     setTimeout(athanLoop, 1000 * 5);
@@ -19,10 +17,10 @@ export default async function athanLoop() {
 
   const date = new Date();
 
-  const prayerTimes = await getPrayerTimes(date, citySetting.value);
+  const prayerTimes = await getPrayerTimes(date, citySetting);
 
   const currentPrayer = prayers.find((prayer) => {
-    const prayerTime = prayerTimes[prayer];
+    const prayerTime = new Date(prayerTimes[prayer]);
     const timeDifference = prayerTime.getTime() - date.getTime();
     return timeDifference < 0 && timeDifference > -60000;
   });
@@ -63,7 +61,7 @@ export default async function athanLoop() {
       return;
     }
 
-    device.setVolume(deviceNameMap[device.name].volume, () => {
+    device.setVolume(Number(deviceNameMap[device.name].volume), () => {
       device.play(athanUrl, (err: any) => {
         let played = false;
         if (!err) {

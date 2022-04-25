@@ -40,7 +40,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var axios_1 = __importDefault(require("axios"));
-var database_1 = __importDefault(require("./database"));
+var fs_1 = __importDefault(require("fs"));
 function getPrayerTimesFromServer(date, city) {
     return __awaiter(this, void 0, void 0, function () {
         var timestamp, response, times;
@@ -65,9 +65,7 @@ function getPrayerTimesFromServer(date, city) {
                         maghrib: new Date(response.data.data.timings.Maghrib),
                         isha: new Date(response.data.data.timings.Isha),
                     };
-                    database_1.default
-                        .prepare("INSERT INTO prayer_times (date, fajr, dhuhr, asr, maghrib, isha) VALUES (?, ?, ?, ?, ?, ?)")
-                        .run(times.date, times.fajr.getTime(), times.dhuhr.getTime(), times.asr.getTime(), times.maghrib.getTime(), times.isha.getTime());
+                    fs_1.default.writeFileSync("./prayerTimes.json", JSON.stringify([times]));
                     return [2 /*return*/, times];
             }
         });

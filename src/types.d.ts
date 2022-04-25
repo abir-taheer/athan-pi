@@ -5,7 +5,7 @@ type PrayerTime = {
 } & { date: string };
 
 type DatabaseDevice = {
-  id: number;
+  id: string;
   name: string;
   friendlyName: string;
   host: string;

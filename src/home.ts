@@ -373,7 +373,7 @@ export default `<!DOCTYPE html>
             </div>
 
             {data.map((device) => (
-              <Device {...device} key={device.id} refetch={refetch} />
+              <Device {...device} key={device.name} refetch={refetch} />
             ))}
           </div>
         );

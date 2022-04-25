@@ -40,9 +40,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var chromecast_api_1 = __importDefault(require("chromecast-api"));
-var database_1 = __importDefault(require("../database/database"));
 var getDevices_1 = __importDefault(require("../database/getDevices"));
 var getPrayerTimes_1 = __importDefault(require("./getPrayerTimes"));
+var getSettings_1 = __importDefault(require("./getSettings"));
 var prayers = ["fajr", "dhuhr", "asr", "maghrib", "isha"];
 var sleep = function (ms) { return new Promise(function (resolve) { return setTimeout(resolve, ms); }); };
 function athanLoop() {
@@ -50,18 +50,15 @@ function athanLoop() {
         var citySetting, date, prayerTimes, currentPrayer, devices, deviceNameMap, athanUrl, duaAfterUrl, chromecast;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, database_1.default
-                        .prepare("SELECT value FROM settings WHERE name = ?")
-                        .get("city")];
-                case 1:
-                    citySetting = _a.sent();
+                case 0:
+                    citySetting = (0, getSettings_1.default)().city;
                     if (!citySetting) {
                         setTimeout(athanLoop, 1000 * 5);
                         return [2 /*return*/];
                     }
                     date = new Date();
                     return [4 /*yield*/, (0, getPrayerTimes_1.default)(date, citySetting.value)];
-                case 2:
+                case 1:
                     prayerTimes = _a.sent();
                     currentPrayer = prayers.find(function (prayer) {
                         var prayerTime = prayerTimes[prayer];
@@ -108,7 +105,7 @@ function athanLoop() {
                         });
                     });
                     return [4 /*yield*/, sleep(1000 * 60 * 5)];
-                case 3:
+                case 2:
                     _a.sent();
                     setTimeout(athanLoop, 1000 * 5);
                     return [2 /*return*/];

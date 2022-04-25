@@ -39,25 +39,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var database_1 = __importDefault(require("../database/database"));
 var getPrayerTimesFromServer_1 = __importDefault(require("../database/getPrayerTimesFromServer"));
+var fs_1 = __importDefault(require("fs"));
 function getPrayerTimes(date, city) {
     return __awaiter(this, void 0, void 0, function () {
-        var databaseTimes, fromServer;
+        var allTimes, times, timesForDate, fromServer;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    databaseTimes = database_1.default
-                        .prepare("SELECT * FROM prayer_times WHERE date = ?")
-                        .all(date.toDateString());
-                    if (databaseTimes.length > 0) {
+                    allTimes = fs_1.default.readFileSync("./prayerTimes.json", "utf8");
+                    times = JSON.parse(allTimes);
+                    timesForDate = times.find(function (time) { return time.date === date.toDateString(); });
+                    if (timesForDate > 0) {
                         return [2 /*return*/, {
-                                date: databaseTimes[0].date,
-                                fajr: new Date(databaseTimes[0].fajr),
-                                dhuhr: new Date(databaseTimes[0].dhuhr),
-                                asr: new Date(databaseTimes[0].asr),
-                                maghrib: new Date(databaseTimes[0].maghrib),
-                                isha: new Date(databaseTimes[0].isha),
+                                date: timesForDate.date,
+                                fajr: new Date(timesForDate.fajr),
+                                dhuhr: new Date(timesForDate.dhuhr),
+                                asr: new Date(timesForDate.asr),
+                                maghrib: new Date(timesForDate.maghrib),
+                                isha: new Date(timesForDate.isha),
                             }];
                     }
                     return [4 /*yield*/, (0, getPrayerTimesFromServer_1.default)(date, city)];

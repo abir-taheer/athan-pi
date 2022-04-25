@@ -2,11 +2,12 @@ import ChromecastAPI from "chromecast-api";
 import initTables from "./database/initTables";
 import getPrayerTimes from "./utils/getPrayerTimes";
 import express from "express";
-import database from "./database/database";
 import athanLoop from "./utils/athanLoop";
 import getDevices from "./database/getDevices";
 import bodyParser from "body-parser";
 import home from "./home";
+import fs from "fs";
+import getSettings from "./utils/getSettings";
 
 initTables();
 athanLoop();
@@ -33,30 +34,28 @@ app.get("/api/devices/scan", (req, res) => {
     return;
   }
 
+  const devices = getDevices();
+
   chromecast.on("device", (device) => {
     // Check to see if it's already in the database
 
-    const existingDevice = database
-
-      .prepare(`SELECT * FROM devices WHERE name = ?`)
-      .get(device.name);
+    const existingDevice = devices.find((d) => d.name === device.name);
 
     if (existingDevice) {
       return;
     }
 
-    database
-      .prepare(
-        `INSERT INTO devices (name, friendlyName, volume, host, enabled, prayers) VALUES (?, ?, ?, ?, ?, ?)`
-      )
-      .run(
-        device.name,
-        device.friendlyName,
-        0.5,
-        device.host,
-        1,
-        JSON.stringify([])
-      );
+    devices.push({
+      id: device.name,
+      name: device.name,
+      friendlyName: device.friendlyName,
+      host: device.host,
+      enabled: true,
+      volume: 0.5,
+      prayers: [],
+    });
+
+    fs.writeFileSync("./devices.json", JSON.stringify(devices));
   });
 
   setTimeout(() => {
@@ -70,67 +69,48 @@ app.get("/api/devices/list", (req, res) => {
 });
 
 app.post("/api/devices/update/:id", (req, res) => {
-  const id = parseInt(req.params.id as string);
+  const id = req.params.id as string;
 
   const { enabled, volume, prayers } = req.body;
 
-  const device = database.prepare(`SELECT * FROM devices WHERE id = ?`).get(id);
+  const devices = getDevices();
+  const deviceIndex = devices.findIndex((d) => d.id === id);
 
-  if (!device) {
+  if (deviceIndex === -1) {
     res.json({
       success: false,
       error: "Device not found",
     });
   }
 
-  database
-    .prepare(
-      "UPDATE devices SET enabled = ?, volume = ?, prayers = ? WHERE id = ?"
-    )
-    .run(enabled ? 1 : 0, volume, JSON.stringify(prayers), id);
+  devices[deviceIndex].enabled = enabled;
+  devices[deviceIndex].volume = volume;
+  devices[deviceIndex].prayers = prayers;
 
-  res.json(database.prepare(`SELECT * FROM devices WHERE id = ?`).get(id));
+  fs.writeFileSync("./devices.json", JSON.stringify(devices));
+
+  res.json(devices[deviceIndex]);
 });
 
 app.get("/api/settings/list", (req, res) => {
-  const settings = database.prepare("SELECT * FROM settings").all();
-
-  const settingsMap: { [key: string]: string } = {};
-
-  settings.forEach((setting) => {
-    settingsMap[setting.name] = setting.value;
-  });
+  const settingsMap = getSettings();
 
   res.json(settingsMap);
 });
 
 app.post("/api/settings/update/:name", (req, res) => {
   const name = req.params.name as string;
+  const settingsMap = getSettings();
 
-  const { value } = req.body;
+  settingsMap[name] = req.body.value;
 
-  const setting = database
-    .prepare(`SELECT * FROM settings WHERE name = ?`)
-    .get(name);
-
-  if (!setting) {
-    database
-      .prepare(`INSERT INTO settings (name, value) VALUES (?, ?)`)
-      .run(name, value);
-  } else {
-    database
-      .prepare("UPDATE settings SET value = ? WHERE name = ?")
-      .run(value, name);
-  }
-
-  res.json(database.prepare(`SELECT * FROM settings WHERE name = ?`).get(name));
+  fs.writeFileSync("./settings.json", JSON.stringify(settingsMap));
+  res.json(settingsMap);
 });
 
 app.get("/api/prayertimes", async (req, res) => {
-  const citySetting = database
-    .prepare("SELECT * FROM settings WHERE name = ?")
-    .get("city");
-  const city = citySetting ? citySetting.value : "New York City";
+  const settings = getSettings();
+  const city = settings.city ? settings.city.value : "New York City";
   const prayers = await getPrayerTimes(new Date(), city);
 
   res.json(prayers);

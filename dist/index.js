@@ -43,11 +43,12 @@ var chromecast_api_1 = __importDefault(require("chromecast-api"));
 var initTables_1 = __importDefault(require("./database/initTables"));
 var getPrayerTimes_1 = __importDefault(require("./utils/getPrayerTimes"));
 var express_1 = __importDefault(require("express"));
-var database_1 = __importDefault(require("./database/database"));
 var athanLoop_1 = __importDefault(require("./utils/athanLoop"));
 var getDevices_1 = __importDefault(require("./database/getDevices"));
 var body_parser_1 = __importDefault(require("body-parser"));
 var home_1 = __importDefault(require("./home"));
+var fs_1 = __importDefault(require("fs"));
+var getSettings_1 = __importDefault(require("./utils/getSettings"));
 (0, initTables_1.default)();
 (0, athanLoop_1.default)();
 var app = (0, express_1.default)();
@@ -66,17 +67,23 @@ app.get("/api/devices/scan", function (req, res) {
         });
         return;
     }
+    var devices = (0, getDevices_1.default)();
     chromecast.on("device", function (device) {
         // Check to see if it's already in the database
-        var existingDevice = database_1.default
-            .prepare("SELECT * FROM devices WHERE name = ?")
-            .get(device.name);
+        var existingDevice = devices.find(function (d) { return d.name === device.name; });
         if (existingDevice) {
             return;
         }
-        database_1.default
-            .prepare("INSERT INTO devices (name, friendlyName, volume, host, enabled, prayers) VALUES (?, ?, ?, ?, ?, ?)")
-            .run(device.name, device.friendlyName, 0.5, device.host, 1, JSON.stringify([]));
+        devices.push({
+            id: device.name,
+            name: device.name,
+            friendlyName: device.friendlyName,
+            host: device.host,
+            enabled: true,
+            volume: 0.5,
+            prayers: [],
+        });
+        fs_1.default.writeFileSync("./devices.json", JSON.stringify(devices));
     });
     setTimeout(function () {
         chromecast.destroy();
@@ -89,53 +96,38 @@ app.get("/api/devices/list", function (req, res) {
 app.post("/api/devices/update/:id", function (req, res) {
     var id = parseInt(req.params.id);
     var _a = req.body, enabled = _a.enabled, volume = _a.volume, prayers = _a.prayers;
-    var device = database_1.default.prepare("SELECT * FROM devices WHERE id = ?").get(id);
-    if (!device) {
+    var devices = (0, getDevices_1.default)();
+    var deviceIndex = devices.findIndex(function (d) { return d.id === id; });
+    if (deviceIndex === -1) {
         res.json({
             success: false,
             error: "Device not found",
         });
     }
-    database_1.default
-        .prepare("UPDATE devices SET enabled = ?, volume = ?, prayers = ? WHERE id = ?")
-        .run(enabled ? 1 : 0, volume, JSON.stringify(prayers), id);
-    res.json(database_1.default.prepare("SELECT * FROM devices WHERE id = ?").get(id));
+    devices[deviceIndex].enabled = enabled;
+    devices[deviceIndex].volume = volume;
+    devices[deviceIndex].prayers = prayers;
+    fs_1.default.writeFileSync("./devices.json", JSON.stringify(devices));
+    res.json(devices[deviceIndex]);
 });
 app.get("/api/settings/list", function (req, res) {
-    var settings = database_1.default.prepare("SELECT * FROM settings").all();
-    var settingsMap = {};
-    settings.forEach(function (setting) {
-        settingsMap[setting.name] = setting.value;
-    });
+    var settingsMap = (0, getSettings_1.default)();
     res.json(settingsMap);
 });
 app.post("/api/settings/update/:name", function (req, res) {
     var name = req.params.name;
-    var value = req.body.value;
-    var setting = database_1.default
-        .prepare("SELECT * FROM settings WHERE name = ?")
-        .get(name);
-    if (!setting) {
-        database_1.default
-            .prepare("INSERT INTO settings (name, value) VALUES (?, ?)")
-            .run(name, value);
-    }
-    else {
-        database_1.default
-            .prepare("UPDATE settings SET value = ? WHERE name = ?")
-            .run(value, name);
-    }
-    res.json(database_1.default.prepare("SELECT * FROM settings WHERE name = ?").get(name));
+    var settingsMap = (0, getSettings_1.default)();
+    settingsMap[name] = req.body.value;
+    fs_1.default.writeFileSync("./settings.json", JSON.stringify(settingsMap));
+    res.json(settingsMap);
 });
 app.get("/api/prayertimes", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var citySetting, city, prayers;
+    var settings, city, prayers;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                citySetting = database_1.default
-                    .prepare("SELECT * FROM settings WHERE name = ?")
-                    .get("city");
-                city = citySetting ? citySetting.value : "New York City";
+                settings = (0, getSettings_1.default)();
+                city = settings.city ? settings.city.value : "New York City";
                 return [4 /*yield*/, (0, getPrayerTimes_1.default)(new Date(), city)];
             case 1:
                 prayers = _a.sent();

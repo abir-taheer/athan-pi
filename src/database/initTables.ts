@@ -1,33 +1,17 @@
-import database from "./database";
+import fs from "fs";
 
 export default function initTables() {
-  database
-    .prepare(
-      `CREATE TABLE IF NOT EXISTS settings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            value TEXT
-        )`
-    )
-    .run();
+  if (!fs.existsSync("./settings.json")) {
+    fs.writeFileSync("./settings.json", "{ }");
+  }
 
-  database
-    .prepare(
-      `CREATE TABLE IF NOT EXISTS devices (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            friendlyName TEXT,
-            host TEXT,
-            enabled INTEGER,
-            volume FLOAT,
-            prayers TEXT
-            )`
-    )
-    .run();
+  if (!fs.existsSync("./devices.json")) {
+    fs.writeFileSync("./devices.json", "[]");
+  }
 
-  database
-    .prepare(
-      `CREATE TABLE IF NOT EXISTS prayer_times (id INTEGER PRIMARY KEY AUTOINCREMENT, date VARCHAR(32), fajr DATETIME, dhuhr DATETIME, asr DATETIME, maghrib DATETIME, isha DATETIME)`
-    )
-    .run();
+  if (!fs.existsSync("./prayerTimes.json")) {
+    fs.writeFileSync("./prayerTimes.json", "[]");
+  }
+
+  console.log("initialized");
 }
