@@ -1,0 +1,1 @@
+{"version":3,"file":"initTables.js","sourceRoot":"","sources":["../../src/database/initTables.ts"],"names":[],"mappings":";;;;;AAAA,wDAAkC;AAElC,SAAwB,UAAU;IAChC,kBAAQ;SACL,OAAO,CACN,qJAII,CACL;SACA,GAAG,EAAE,CAAC;IAET,kBAAQ;SACL,OAAO,CACN,2QAQQ,CACT;SACA,GAAG,EAAE,CAAC;IAET,kBAAQ;SACL,OAAO,CACN,gLAAgL,CACjL;SACA,GAAG,EAAE,CAAC;AACX,CAAC;AA9BD,6BA8BC"}
