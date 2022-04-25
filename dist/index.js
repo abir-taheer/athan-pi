@@ -94,7 +94,7 @@ app.get("/api/devices/list", function (req, res) {
     res.json((0, getDevices_1.default)());
 });
 app.post("/api/devices/update/:id", function (req, res) {
-    var id = parseInt(req.params.id);
+    var id = req.params.id;
     var _a = req.body, enabled = _a.enabled, volume = _a.volume, prayers = _a.prayers;
     var devices = (0, getDevices_1.default)();
     var deviceIndex = devices.findIndex(function (d) { return d.id === id; });

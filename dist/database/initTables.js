@@ -14,6 +14,7 @@ function initTables() {
     if (!fs_1.default.existsSync("./prayerTimes.json")) {
         fs_1.default.writeFileSync("./prayerTimes.json", "[]");
     }
+    console.log("initialized");
 }
 exports.default = initTables;
 //# sourceMappingURL=initTables.js.map

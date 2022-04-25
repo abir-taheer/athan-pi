@@ -57,11 +57,11 @@ function athanLoop() {
                         return [2 /*return*/];
                     }
                     date = new Date();
-                    return [4 /*yield*/, (0, getPrayerTimes_1.default)(date, citySetting.value)];
+                    return [4 /*yield*/, (0, getPrayerTimes_1.default)(date, citySetting)];
                 case 1:
                     prayerTimes = _a.sent();
                     currentPrayer = prayers.find(function (prayer) {
-                        var prayerTime = prayerTimes[prayer];
+                        var prayerTime = new Date(prayerTimes[prayer]);
                         var timeDifference = prayerTime.getTime() - date.getTime();
                         return timeDifference < 0 && timeDifference > -60000;
                     });
@@ -89,7 +89,7 @@ function athanLoop() {
                             !deviceNameMap[device.name].prayers.includes(currentPrayer)) {
                             return;
                         }
-                        device.setVolume(deviceNameMap[device.name].volume, function () {
+                        device.setVolume(Number(deviceNameMap[device.name].volume), function () {
                             device.play(athanUrl, function (err) {
                                 var played = false;
                                 if (!err) {

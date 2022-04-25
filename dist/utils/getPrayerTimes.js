@@ -50,7 +50,7 @@ function getPrayerTimes(date, city) {
                     allTimes = fs_1.default.readFileSync("./prayerTimes.json", "utf8");
                     times = JSON.parse(allTimes);
                     timesForDate = times.find(function (time) { return time.date === date.toDateString(); });
-                    if (timesForDate > 0) {
+                    if (timesForDate) {
                         return [2 /*return*/, {
                                 date: timesForDate.date,
                                 fajr: new Date(timesForDate.fajr),
