@@ -39,102 +39,31 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var chromecast_api_1 = __importDefault(require("chromecast-api"));
-var initTables_1 = __importDefault(require("./database/initTables"));
-var getPrayerTimes_1 = __importDefault(require("./utils/getPrayerTimes"));
-var express_1 = __importDefault(require("express"));
-var athanLoop_1 = __importDefault(require("./utils/athanLoop"));
-var getDevices_1 = __importDefault(require("./database/getDevices"));
-var body_parser_1 = __importDefault(require("body-parser"));
-var home_1 = __importDefault(require("./home"));
-var fs_1 = __importDefault(require("fs"));
-var getSettings_1 = __importDefault(require("./utils/getSettings"));
-(0, initTables_1.default)();
-(0, athanLoop_1.default)();
-var app = (0, express_1.default)();
-app.use(body_parser_1.default.json());
-app.use(body_parser_1.default.urlencoded({ extended: true }));
-app.get("/", function (req, res) {
-    res.send(home_1.default);
-});
-app.get("/api/devices/scan", function (req, res) {
-    var chromecast = new chromecast_api_1.default();
-    var timeToScan = parseInt(req.query.timeToScan || "5000");
-    if (!timeToScan || timeToScan < 0 || timeToScan > 10000) {
-        res.send({
-            success: false,
-            error: "Invalid time to scan",
+var node_cluster_1 = __importDefault(require("node:cluster"));
+var runApp_1 = __importDefault(require("./runApp"));
+var sleep = function (ms) { return new Promise(function (res) { return setTimeout(res, ms); }); };
+if (node_cluster_1.default.isPrimary) {
+    node_cluster_1.default.fork();
+    // If for some reason the app shuts down, restart it
+    // Wait 20s to prevent an infinite restart that kills the pi
+    node_cluster_1.default.on("exit", function (workerId, code, signal) { return __awaiter(void 0, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    console.log("Worker ".concat(workerId, " died with code ").concat(code, " and signal ").concat(signal));
+                    return [4 /*yield*/, sleep(20 * 1000)];
+                case 1:
+                    _a.sent();
+                    node_cluster_1.default.fork();
+                    return [2 /*return*/];
+            }
         });
-        return;
-    }
-    var devices = (0, getDevices_1.default)();
-    chromecast.on("device", function (device) {
-        // Check to see if it's already in the database
-        var existingDevice = devices.find(function (d) { return d.name === device.name; });
-        if (existingDevice) {
-            return;
-        }
-        devices.push({
-            id: device.name,
-            name: device.name,
-            friendlyName: device.friendlyName,
-            host: device.host,
-            enabled: true,
-            volume: 0.5,
-            prayers: [],
-        });
-        fs_1.default.writeFileSync("./devices.json", JSON.stringify(devices));
+    }); });
+    node_cluster_1.default.on("online", function (worker) {
+        console.log("Worker ".concat(worker.process.pid, " is online"));
     });
-    setTimeout(function () {
-        chromecast.destroy();
-        res.send({ success: true });
-    }, timeToScan);
-});
-app.get("/api/devices/list", function (req, res) {
-    res.json((0, getDevices_1.default)());
-});
-app.post("/api/devices/update/:id", function (req, res) {
-    var id = req.params.id;
-    var _a = req.body, enabled = _a.enabled, volume = _a.volume, prayers = _a.prayers;
-    var devices = (0, getDevices_1.default)();
-    var deviceIndex = devices.findIndex(function (d) { return d.id === id; });
-    if (deviceIndex === -1) {
-        res.json({
-            success: false,
-            error: "Device not found",
-        });
-    }
-    devices[deviceIndex].enabled = enabled;
-    devices[deviceIndex].volume = volume;
-    devices[deviceIndex].prayers = prayers;
-    fs_1.default.writeFileSync("./devices.json", JSON.stringify(devices));
-    res.json(devices[deviceIndex]);
-});
-app.get("/api/settings/list", function (req, res) {
-    var settingsMap = (0, getSettings_1.default)();
-    res.json(settingsMap);
-});
-app.post("/api/settings/update/:name", function (req, res) {
-    var name = req.params.name;
-    var settingsMap = (0, getSettings_1.default)();
-    settingsMap[name] = req.body.value;
-    fs_1.default.writeFileSync("./settings.json", JSON.stringify(settingsMap));
-    res.json(settingsMap);
-});
-app.get("/api/prayertimes", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var settings, city, prayers;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                settings = (0, getSettings_1.default)();
-                city = settings.city ? settings.city.value : "New York City";
-                return [4 /*yield*/, (0, getPrayerTimes_1.default)(new Date(), city)];
-            case 1:
-                prayers = _a.sent();
-                res.json(prayers);
-                return [2 /*return*/];
-        }
-    });
-}); });
-app.listen(3000);
+}
+else {
+    (0, runApp_1.default)();
+}
 //# sourceMappingURL=index.js.map
