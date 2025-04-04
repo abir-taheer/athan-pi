@@ -1,7 +1,16 @@
 import fs from "fs";
+import { devicesJsonPath } from "./initTables";
 
 export default function getDevices(): DatabaseDevice[] {
-  const devices = JSON.parse(fs.readFileSync("./devices.json", "utf8"));
+  let devicesString: string = "";
+
+  try {
+    devicesString = fs.readFileSync(devicesJsonPath, "utf8");
+  } catch {
+    fs.writeFileSync(devicesJsonPath, "[ ]");
+  }
+
+  const devices = devicesString ? JSON.parse(devicesString) : [];
 
   return devices.map((row: any) => {
     return {

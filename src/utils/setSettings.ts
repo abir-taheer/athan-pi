@@ -1,10 +1,11 @@
 import fs from "fs";
+import { settingsJsonPath } from "../database/initTables";
 
 export default function setSettings(name: string, value: string) {
-  if (!fs.existsSync("./settings.json")) {
-    fs.writeFileSync("./settings.json", "{ }");
+  if (!fs.existsSync(settingsJsonPath)) {
+    fs.writeFileSync(settingsJsonPath, "{ }");
   }
-  const settings = JSON.parse(fs.readFileSync("./settings.json", "utf8"));
+  const settings = JSON.parse(fs.readFileSync(settingsJsonPath, "utf8"));
   settings[name] = value;
-  fs.writeFileSync("./settings.json", JSON.stringify(settings));
+  fs.writeFileSync(settingsJsonPath, JSON.stringify(settings));
 }

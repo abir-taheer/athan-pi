@@ -1,5 +1,6 @@
 import axios from "axios";
 import fs from "fs";
+import { prayerTimesJsonPath } from "./initTables";
 
 type ApiResponse = {
   code: number;
@@ -101,7 +102,7 @@ type ApiResponse = {
 
 export default async function getPrayerTimesFromServer(
   date: Date,
-  city: string
+  city: string,
 ) {
   const timestamp = Math.round(date.getTime() / 1000);
   const response = await axios.get<ApiResponse>(
@@ -112,7 +113,7 @@ export default async function getPrayerTimesFromServer(
         country: "US",
         iso8601: true,
       },
-    }
+    },
   );
 
   const times: PrayerTime = {
@@ -124,7 +125,7 @@ export default async function getPrayerTimesFromServer(
     isha: new Date(response.data.data.timings.Isha),
   };
 
-  fs.writeFileSync("./prayerTimes.json", JSON.stringify([times]));
+  fs.writeFileSync(prayerTimesJsonPath, JSON.stringify([times]));
 
   return times;
 }

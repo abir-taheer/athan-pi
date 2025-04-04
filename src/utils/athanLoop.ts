@@ -52,34 +52,56 @@ export default async function athanLoop() {
     "https://res.cloudinary.com/abir-taheer/video/upload/v1650890068/athan/after_athan.mp3";
 
   const chromecast = new ChromecastAPI();
-  chromecast.on("device", (device) => {
-    if (
-      !deviceNameMap[device.name] ||
-      !deviceNameMap[device.name].enabled ||
-      !deviceNameMap[device.name].prayers.includes(currentPrayer)
-    ) {
-      return;
-    }
+  const discoveredDevices: ChromecastDevice[] = [];
 
-    device.setVolume(Number(deviceNameMap[device.name].volume), () => {
-      device.play(athanUrl, (err: any) => {
-        let played = false;
-        if (!err) {
-          device.on("finished", () => {
-            if (played) {
-              return;
-            }
+  const allEnabledDevices = devices.filter(
+    (device) => device.enabled && device.prayers.includes(currentPrayer),
+  );
 
-            played = true;
+  const devicesLeftToDiscoverSet = new Set(
+    allEnabledDevices.map((device) => device.name),
+  );
 
-            device.play(duaAfterUrl);
-          });
-        }
+  await new Promise((resolve) => {
+    // max of 10 seconds to discover devices
+    setTimeout(resolve, 1000 * 10);
+
+    chromecast.on("device", (device) => {
+      if (
+        !deviceNameMap[device.name] ||
+        !deviceNameMap[device.name].enabled ||
+        !deviceNameMap[device.name].prayers.includes(currentPrayer)
+      ) {
+        return;
+      }
+
+      discoveredDevices.push(device);
+      devicesLeftToDiscoverSet.delete(device.name);
+
+      if (devicesLeftToDiscoverSet.size === 0) {
+        resolve(true);
+      }
+    });
+
+    discoveredDevices.forEach((device) => {
+      device.setVolume(Number(deviceNameMap[device.name].volume), () => {
+        device.play(athanUrl, (err: any) => {
+          let played = false;
+          if (!err) {
+            device.on("finished", () => {
+              if (played) {
+                return;
+              }
+
+              played = true;
+
+              device.play(duaAfterUrl);
+            });
+          }
+        });
       });
     });
   });
 
-  await sleep(1000 * 60 * 5);
-
-  setTimeout(athanLoop, 1000 * 5);
+  setTimeout(athanLoop, 1000);
 }

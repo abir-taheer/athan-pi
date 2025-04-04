@@ -1,14 +1,15 @@
 import getPrayerTimesFromServer from "../database/getPrayerTimesFromServer";
 import fs from "fs";
+import { prayerTimesJsonPath } from "../database/initTables";
 
 export default async function getPrayerTimes(
   date: Date,
-  city: string
+  city: string,
 ): Promise<PrayerTime> {
-  const allTimes = fs.readFileSync("./prayerTimes.json", "utf8");
+  const allTimes = fs.readFileSync(prayerTimesJsonPath, "utf8");
   const times = JSON.parse(allTimes);
   const timesForDate = times.find(
-    (time: any) => time.date === date.toDateString()
+    (time: any) => time.date === date.toDateString(),
   );
 
   if (timesForDate) {

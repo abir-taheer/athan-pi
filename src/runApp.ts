@@ -1,5 +1,8 @@
 import ChromecastAPI from "chromecast-api";
-import initTables from "./database/initTables";
+import initTables, {
+  devicesJsonPath,
+  settingsJsonPath,
+} from "./database/initTables";
 import getPrayerTimes from "./utils/getPrayerTimes";
 import express from "express";
 import athanLoop from "./utils/athanLoop";
@@ -9,7 +12,7 @@ import home from "./home";
 import fs from "fs";
 import getSettings from "./utils/getSettings";
 
-export default function runApp(){
+export default function runApp() {
   initTables();
   athanLoop();
 
@@ -56,7 +59,7 @@ export default function runApp(){
         prayers: [],
       });
 
-      fs.writeFileSync("./devices.json", JSON.stringify(devices));
+      fs.writeFileSync(devicesJsonPath, JSON.stringify(devices));
     });
 
     setTimeout(() => {
@@ -88,7 +91,7 @@ export default function runApp(){
     devices[deviceIndex].volume = volume;
     devices[deviceIndex].prayers = prayers;
 
-    fs.writeFileSync("./devices.json", JSON.stringify(devices));
+    fs.writeFileSync(devicesJsonPath, JSON.stringify(devices));
 
     res.json(devices[deviceIndex]);
   });
@@ -105,7 +108,7 @@ export default function runApp(){
 
     settingsMap[name] = req.body.value;
 
-    fs.writeFileSync("./settings.json", JSON.stringify(settingsMap));
+    fs.writeFileSync(settingsJsonPath, JSON.stringify(settingsMap));
     res.json(settingsMap);
   });
 
