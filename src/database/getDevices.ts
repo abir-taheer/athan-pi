@@ -7,7 +7,7 @@ export default function getDevices(): DatabaseDevice[] {
   try {
     devicesString = fs.readFileSync(devicesJsonPath, "utf8");
   } catch {
-    fs.writeFileSync(devicesJsonPath, "[ ]");
+    fs.writeFileSync(devicesJsonPath, "[]");
   }
 
   const devices = devicesString ? JSON.parse(devicesString) : [];

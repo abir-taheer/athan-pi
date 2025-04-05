@@ -106,7 +106,7 @@ export default async function getPrayerTimesFromServer(
 ) {
   const timestamp = Math.round(date.getTime() / 1000);
   const response = await axios.get<ApiResponse>(
-    "http://api.aladhan.com/v1/timingsByCity/" + timestamp,
+    "https://api.aladhan.com/v1/timingsByCity/" + timestamp,
     {
       params: {
         city,

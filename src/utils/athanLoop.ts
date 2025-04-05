@@ -82,26 +82,31 @@ export default async function athanLoop() {
         resolve(true);
       }
     });
-
-    discoveredDevices.forEach((device) => {
-      device.setVolume(Number(deviceNameMap[device.name].volume), () => {
-        device.play(athanUrl, (err: any) => {
-          let played = false;
-          if (!err) {
-            device.on("finished", () => {
-              if (played) {
-                return;
-              }
-
-              played = true;
-
-              device.play(duaAfterUrl);
-            });
-          }
-        });
-      });
-    });
   });
 
-  setTimeout(athanLoop, 1000);
+  await Promise.all(
+    discoveredDevices.map(
+      (device) =>
+        new Promise((resolve) => {
+          device.setVolume(Number(deviceNameMap[device.name].volume), () => {
+            device.play(athanUrl, (err: any) => {
+              let played = false;
+              if (!err) {
+                device.on("finished", () => {
+                  if (played) {
+                    return;
+                  }
+
+                  played = true;
+
+                  device.play(duaAfterUrl, {}, resolve);
+                });
+              }
+            });
+          });
+        }),
+    ),
+  );
+
+  setTimeout(athanLoop, 5 * 1000);
 }
