@@ -84,25 +84,35 @@ export default async function athanLoop() {
     });
   });
 
+  // set all of their volumes to the correct value
   await Promise.all(
     discoveredDevices.map(
       (device) =>
         new Promise((resolve) => {
           device.setVolume(Number(deviceNameMap[device.name].volume), () => {
-            device.play(athanUrl, (err: any) => {
-              let played = false;
-              if (!err) {
-                device.on("finished", () => {
-                  if (played) {
-                    return;
-                  }
+            resolve(true);
+          });
+        }),
+    ),
+  );
 
-                  played = true;
+  await Promise.all(
+    discoveredDevices.map(
+      (device) =>
+        new Promise((resolve) => {
+          device.play(athanUrl, (err: any) => {
+            let played = false;
+            if (!err) {
+              device.on("finished", () => {
+                if (played) {
+                  return;
+                }
 
-                  device.play(duaAfterUrl, {}, resolve);
-                });
-              }
-            });
+                played = true;
+
+                device.play(duaAfterUrl, {}, resolve);
+              });
+            }
           });
         }),
     ),
